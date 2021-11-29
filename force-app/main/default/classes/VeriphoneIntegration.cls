@@ -1,16 +1,26 @@
 public with sharing class VeriphoneIntegration {	
     @future(callout = true)
     public static void PhoneVerification(Set<Id> contactId, String phoneNumber){
+        
+        List<Contact> updatedContactList = new List<Contact>();
+
         string key = 'E4918B5493D14778BC532FFEBDAB7AD7';
         string endPoint = 'https://api.veriphone.io/v2/verify?phone=' + phoneNumber + '&key='+ key;
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         request.setEndpoint(endPoint);
         request.setMethod('GET');
-        HttpResponse response = http.send(request);
-        List<Contact> updatedContactList = new List<Contact>();                 
+        HttpResponse response = http.send(request); 
+        
+        //Parsing the response                 
         VeriphoneResponse vr = (VeriphoneResponse)JSON.deserialize(response.getBody(), VeriphoneResponse.class);
-        List<Contact> conList = [SELECT Id, Name, Phone FROM Contact WHERE Id IN :contactId];
+        
+        //Getting the list of newly created contacts
+        List<Contact> conList = [SELECT Id, Name, Phone 
+                                   FROM Contact 
+                                   WHERE Id 
+                                   IN :contactId];
+
         for(Contact conObj : conList){
             if(conObj.Phone != Null){
                 conObj.Is_Valid__c = vr.phone_valid;
